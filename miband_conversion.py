@@ -38,12 +38,12 @@ df_hr_std.to_csv('converted_data/heart_rate_data_user_5.csv')
 
 df_st_std = df_steps.rename(columns={'steps': 'step_count', 'distance': 'distance_covered', 'Time': 'start_time_interval', 'end_time': 'end_time_interval'}).drop(columns=['Key', 'UpdateTime', 'Uid', 'Sid', 'start_time'])
 df_st_std['speed'], df_st_std['calories_burned'], df_st_std['time_offset'], df_st_std['test_subject'] = np.nan, np.nan, 'UTC+0100', 5
-df_hr_std.to_csv('converted_data/step_count_data_user_5.csv')
+df_st_std.to_csv('converted_data/step_count_data_user_5.csv')
 
 df_dd_std = df_st_std.rename(columns={'start_time_interval': 'day_time', 'step_count': 'daily_step_count'}).drop(columns=['end_time_interval'])
 df_dd_std['day_time'] = df_dd_std['day_time'].apply(lambda x: x.date())
 df_dd_std = df_dd_std.groupby('day_time', as_index=False).sum()
-df_hr_std.to_csv('converted_data/step_count_daily_trend_data_user_5.csv')
+df_dd_std.to_csv('converted_data/step_count_daily_trend_data_user_5.csv')
 
 # Basic visualizations
 fig, ax = plt.subplots(2,2, squeeze=False, figsize=(12,12))

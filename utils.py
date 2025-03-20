@@ -5,6 +5,33 @@ import os
 import matplotlib.pyplot as plt
 
 def convert_user_1(raw_data):
+
+    df = pd.read_csv(
+        "raw_data_heartrate_upload.csv",
+        skiprows=1,        # Skip that very first line
+        usecols=range(21)  # Only read columns 0..20
+    )
+    #print(df.head())
+
+    # Renameing columns of interest to simpler labels
+    df = df.rename(columns={
+        'com.samsung.health.heart_rate.start_time': 'start_time',
+        'com.samsung.health.heart_rate.end_time': 'end_time',
+        'com.samsung.health.heart_rate.heart_rate': 'avg_heart_rate',
+        'com.samsung.health.heart_rate.max': 'max_heart_rate',
+        'com.samsung.health.heart_rate.min': 'min_heart_rate'
+    })
+
+    #  new DataFrame with just the columns we care about
+    df_hr = df[['start_time', 'end_time', 'avg_heart_rate', 'max_heart_rate', 'min_heart_rate']].copy()
+
+    df_hr['start_time'] = pd.to_datetime(df_hr['start_time'])
+    df_hr['end_time'] = pd.to_datetime(df_hr['end_time'])
+
+    df_hr.head(30)
+
+    df_hr.to_csv('Processed_heart_rate_data1.csv', index=False)
+    
     return
 
 def convert_user_2(folder_path):

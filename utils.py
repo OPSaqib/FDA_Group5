@@ -7,7 +7,16 @@ import matplotlib.pyplot as plt
 def convert_user_1(raw_data):
     return
 
-def convert_user_2(folder_path):
+
+def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
+    '''
+    Transforms data from user 2 into the agreed format, and subsequently
+    saves the data to the folder converted_data.
+    
+    Device used is a Samsung Galaxy Fit 3.
+
+    :param folder_path: folder location where raw data is stored.
+    '''
     # Data file tags needed
     file_tag_heart_rate = "heart_rate"
     file_tag_step_count = "step_count"
@@ -20,18 +29,107 @@ def convert_user_2(folder_path):
     load_data_file = lambda y: pd.read_csv(os.path.join(f"{os.getcwd()}", folder_path, str(y)), header=1, index_col=False)
 
     # load all data
+    heart_rate_data = load_data_file(extract_data_file(file_tag_heart_rate))
+    step_count_data = load_data_file(extract_data_file(file_tag_step_count))
+    step_daily_trend_data = load_data_file(extract_data_file(file_tag_step_daily_trend))
+
+    # Remove unneeded text from column names.
+    heart_rate_data.columns = heart_rate_data.columns.str.replace(r'^com\.samsung\.health\.heart_rate\.', '', regex=True)
+    step_count_data.columns = step_count_data.columns.str.replace(r'^com\.samsung\.health\.step_count\.', '', regex=True)
+
+    # Key words per dataframe
+    heart_rate_key_words = ["start_time", "time_offset", "min", "max", "heart_rate"]
+    step_count_key_words = ["walk_step", "distance", "speed", "calorie", "start_time", "end_time", "time_offset"]
+    step_daily_trend_key_words = ["count", "distance", "speed", "calorie", "create_time"]
+
+    # Lambda function to combine key words
+    combine_key_words = lambda z: "|".join(z)
+
+    # Filter dataframes based on key words
+    heart_rate_data_filtered = heart_rate_data.loc[:, heart_rate_data.columns.str.contains(combine_key_words(heart_rate_key_words), case=False)]
+    step_count_data_filtered = step_count_data.loc[:, step_count_data.columns.str.contains(combine_key_words(step_count_key_words), case=False)]
+    step_daily_trend_data_filtered = step_daily_trend_data.loc[:, step_daily_trend_data.columns.str.contains(combine_key_words(step_daily_trend_key_words), case=False)]
+
+    # Final adjustments heart rate data
+        # Rename column names
+    heart_rate_column_map = {
+        "start_time":"date_time",
+        "min":"heart_rate_min",
+        "max":"heart_rate_max"
+    }
+    heart_rate_data_filtered = heart_rate_data_filtered.rename(columns=heart_rate_column_map)
+
+        # Filter date_time to correct format
+    heart_rate_data_filtered["date_time"] = pd.to_datetime(heart_rate_data_filtered["date_time"]).dt.strftime("%Y:%m:%d %H:%M:%S")
     
+        # Add test subject column
+    heart_rate_data_filtered["test_subject"] = 2
+
+        # Order columns
+    heart_rate_data_filtered = heart_rate_data_filtered[["heart_rate", "heart_rate_min", "heart_rate_max", "date_time", "time_offset", "test_subject"]]
+
+    # Final adjustments step count data
+        # Rename column names
+    step_count_column_map = {
+        "walk_step":"step_count",
+        "distance":"distance_covered",
+        "calorie":"calories_burned",
+        "start_time":"start_time_interval",
+        "end_time":"end_time_interval"
+    }
+    step_count_data_filtered = step_count_data_filtered.rename(columns=step_count_column_map)
+
+        # Filter start & end time to correct format
+    step_count_data_filtered["start_time_interval"] = pd.to_datetime(step_count_data_filtered["start_time_interval"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+    step_count_data_filtered["end_time_interval"] = pd.to_datetime(step_count_data_filtered["end_time_interval"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+
+        # step_count to float
+    step_count_data_filtered["step_count"] = step_count_data_filtered["step_count"].astype(float)
+
+        # Add test subject column
+    step_count_data_filtered["test_subject"] = 2
+
+        # Order columns
+    step_count_data_filtered = step_count_data_filtered[["step_count", "distance_covered", "speed", "calories_burned", "start_time_interval", "end_time_interval", "time_offset", "test_subject"]]
 
 
+    # Final adjustments step daily trend data
+        # Rename column names
+    step_daily_trend_column_map = {
+        "create_time":"day_time",
+        "count":"daily_step_count",
+        "distance":"distance_covered",
+        "calorie":"calories_burned"
+    }
+    step_daily_trend_data_filtered = step_daily_trend_data_filtered.rename(columns=step_daily_trend_column_map)
 
+        # Filter day time to correct format
+    step_daily_trend_data_filtered["day_time"] = pd.to_datetime(step_daily_trend_data_filtered["day_time"]).dt.strftime("%Y:%m:%d")
+
+        # daily step count to float
+    step_daily_trend_data_filtered["daily_step_count"] = step_daily_trend_data_filtered["daily_step_count"].astype(float)
+
+        # Add test subject column
+    step_daily_trend_data_filtered["test_subject"] = 2
+
+        # Order columns
+    step_daily_trend_data_filtered = step_daily_trend_data_filtered[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject"]]
     
-    return
+    # Save data frames
+    heart_rate_data_filtered.to_csv('converted_data/heart_rate_data_user_2.csv')
+    step_count_data_filtered.to_csv('converted_data/step_count_data_user_2.csv')
+    step_daily_trend_data_filtered.to_csv('converted_data/step_count_daily_trend_user_2.csv')
+
+    return None
+
 
 def convert_user_3(raw_data):
     return
 
+
 def convert_user_4(raw_data):
     return
+
 
 def convert_user_5(raw_data):
     '''Function to convert raw data for user 5, device: MiBand 7'''
@@ -74,8 +172,8 @@ def convert_user_5(raw_data):
 
 
 # Execute functions
-#convert_user_1()
-#convert_user_2()
-#convert_user_3()
-#convert_user_4()
-convert_user_5('raw_data/raw_data_user_5.csv')
+# convert_user_1()
+# convert_user_2()
+# convert_user_3()
+# convert_user_4()
+# convert_user_5('raw_data/raw_data_user_5.csv')

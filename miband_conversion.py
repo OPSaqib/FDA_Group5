@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # Code below relevant to MiBand 7 - needs adaptation for other data sources when available
 
 # Load dataset from csv
-df = pd.read_csv('raw_data/20250308_8279787831_MiFitness_hlth_center_fitness_data.csv')
+df = pd.read_csv('raw_data/raw_data_user_5.csv')
 #print(df)
 
 # Flatten 'Value' column, which has dictionaries as values, into columns for each dictionary value

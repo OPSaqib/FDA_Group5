@@ -150,30 +150,30 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     return None
 
 
-def convert_user_3(raw_data):
+def convert_user_3(raw_data_path: str = "raw_data_user3.csv")
 
-    # File paths
-    hr_path = os.path.join(folder_path, "heart_rate_data_user_3.csv")
-    sc_path = os.path.join(folder_path, "step_count_data_user_3.csv")
-    sd_path = os.path.join(folder_path, "step_count_daily_trend_user_3.csv")
+    # Load the raw heart rate CSV exported from Fitbit processing
+    df = pd.read_csv(
+        raw_data_path,
+        skiprows=0  # No need to skip header rows as data is already clean
+    )
 
-    # Load data
-    heart_rate_data = pd.read_csv(hr_path)
-    step_count_data = pd.read_csv(sc_path)
-    step_daily_trend_data = pd.read_csv(sd_path)
+    # Rename columns to match group standard
+    df = df.rename(columns={
+        'heart_rate': 'heart_rate',
+        'heart_rate_min': 'heart_rate_min',
+        'heart_rate_max': 'heart_rate_max',
+        'date_time': 'date_time',
+        'time_offset': 'time_offset',
+        'test_subject': 'test_subject'
+    })
 
-    # Ensure proper formatting and consistency
-    heart_rate_data["date_time"] = pd.to_datetime(heart_rate_data["date_time"]).dt.strftime("%Y-%m-%d %H:%M:%S")
-    step_count_data["start_time_interval"] = pd.to_datetime(step_count_data["start_time_interval"]).dt.strftime("%Y-%m-%d %H:%M:%S")
-    step_count_data["end_time_interval"] = pd.to_datetime(step_count_data["end_time_interval"]).dt.strftime("%Y-%m-%d %H:%M:%S")
-    step_daily_trend_data["day_time"] = pd.to_datetime(step_daily_trend_data["day_time"]).dt.strftime("%Y-%m-%d")
+    # Ensure correct datetime format
+    df['date_time'] = pd.to_datetime(df['date_time'])
 
-    # Save to converted_data folder
-    os.makedirs("converted_data", exist_ok=True)
+    # Save the cleaned data
+    df.to_csv('Processed_heart_rate_data_user3.csv', index=False)
 
-    heart_rate_data.to_csv("converted_data/heart_rate_data_user_3.csv", index=False)
-    step_count_data.to_csv("converted_data/step_count_data_user_3.csv", index=False)
-    step_daily_trend_data.to_csv("converted_data/step_count_daily_trend_user_3.csv", index=False)
     return
 
 

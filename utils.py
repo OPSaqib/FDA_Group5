@@ -150,7 +150,7 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     return None
 
 
-def convert_user_3(raw_data_path: str = "raw_data_user3.csv")
+def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
 
     # Load the raw heart rate CSV exported from Fitbit processing
     df = pd.read_csv(
@@ -181,8 +181,10 @@ def convert_user_4(raw_data):
     return
 
 
-def convert_user_5(raw_data):
-    '''Function to convert raw data for user 5, device: MiBand 7'''
+def convert_user_5(raw_data: str) -> None:
+    '''
+    Function to convert raw data for user 5, device: MiBand 7
+    '''
     # Load dataset from csv
     df = pd.read_csv(raw_data)
     # Flatten 'Value' column, which has dictionaries as values, into columns for each dictionary value

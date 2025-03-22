@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+import datetime as dt
 
 # Load and merge heartrate datasets
 df_heartrate = pd.DataFrame()
@@ -57,6 +60,73 @@ for k in range(1,6):
     except FileNotFoundError:
        print(f'Daily step trend csv for user {k} not found!')
 
-print(df_heartrate)
-print(df_steps)
-print(df_daily_steps)
+# Additional cleaning steps
+# Sort on dates for better visualizations later(?)
+df_heartrate = df_heartrate.sort_values(by="date_time")
+df_steps = df_steps.sort_values(by="start_time_interval")
+df_daily_steps = df_daily_steps.sort_values(by="day_time")
+
+# Some users do not have date_time, but start_time and end_time instead. Use start_time as the date_time.
+df_heartrate['date_time'] = df_heartrate['date_time'].combine_first(df_heartrate['start_time'])
+# Same thing applies for heart_rate & avg_heart_rate, heart_rate_max & max_heart_rate, etc.
+df_heartrate['heart_rate'] = df_heartrate['heart_rate'].combine_first(df_heartrate['avg_heart_rate'])
+df_heartrate['heart_rate_min'] = df_heartrate['heart_rate_min'].combine_first(df_heartrate['min_heart_rate'])
+df_heartrate['heart_rate_max'] = df_heartrate['heart_rate_max'].combine_first(df_heartrate['max_heart_rate'])
+
+# Remove an erroneous index column, and the now unneeded duplicate columns
+df_heartrate = df_heartrate.drop(columns=['Unnamed: 0', 'start_time', 'end_time', 'avg_heart_rate', 'max_heart_rate', 'min_heart_rate'])
+df_steps = df_steps.drop(columns=['Unnamed: 0'])
+df_daily_steps = df_daily_steps.drop(columns=['Unnamed: 0'])
+
+# Fix datetime format inconsistencies
+df_heartrate['date_time'] = df_heartrate['date_time'].str.replace(r'(\d{4}):(\d{2}):(\d{2})', r'\1-\2-\3', regex=True)
+df_heartrate['date_time'] = pd.to_datetime(df_heartrate['date_time'])
+df_steps['start_time_interval'] = df_steps['start_time_interval'].str.replace(r'(\d{4}):(\d{2}):(\d{2})', r'\1-\2-\3', regex=True)
+df_steps['start_time_interval'] = pd.to_datetime(df_steps['start_time_interval'])
+df_steps['end_time_interval'] = df_steps['end_time_interval'].str.replace(r'(\d{4}):(\d{2}):(\d{2})', r'\1-\2-\3', regex=True)
+df_steps['end_time_interval'] = pd.to_datetime(df_steps['end_time_interval'])
+df_daily_steps['day_time'] = df_daily_steps['day_time'].str.replace(r'(\d{4}):(\d{2}):(\d{2})', r'\1-\2-\3', regex=True)
+df_daily_steps['day_time'] = pd.to_datetime(df_daily_steps['day_time'])
+
+# Filter out a row that had a datetime of January 5th 2071 - this date has not happened yet :). Using the course end date as the cutoff point
+df_heartrate = df_heartrate[df_heartrate['date_time'] < dt.datetime(2030, 4, 10)]
+# Also filter out data before february 2025, because this is outside our study range. Using the course start date as the cutoff point
+df_heartrate = df_heartrate[df_heartrate['date_time'] > dt.datetime(2025, 2, 10)]
+
+# TODO: more cleaning
+
+# Basic visualization
+fig, ax = plt.subplots(3, 1, squeeze=False, figsize=(12,12))
+
+# Define a colormap
+num_subjects = df_heartrate["test_subject"].nunique()
+colors = cm.viridis(np.linspace(0, 1, num_subjects))  # Generate distinct colors
+
+# Create a mapping from test_subject to colors
+subject_colors = {subject: color for subject, color in zip(sorted(df_heartrate["test_subject"].unique()), colors)}
+
+# Heart Rate Plot
+for subject in df_heartrate["test_subject"].unique():
+    subset = df_heartrate[df_heartrate["test_subject"] == subject]
+    ax[0,0].step(subset["date_time"], subset["heart_rate"], c=subject_colors[subject], label=f'Subject {subject}')
+ax[0,0].set_title('Heartrate (bpm)')
+ax[0,0].tick_params(axis='x', labelrotation=45)
+ax[0,0].legend()
+
+# Steps Plot
+for subject in df_steps["test_subject"].unique():
+    subset = df_steps[df_steps["test_subject"] == subject]
+    ax[1,0].scatter(subset["start_time_interval"], subset["step_count"], color=subject_colors[subject], label=f'Subject {subject}')
+ax[1,0].set_title('Steps')
+ax[1,0].tick_params(axis='x', labelrotation=45)
+ax[1,0].legend()
+
+# Daily Steps Plot
+for subject in df_daily_steps["test_subject"].unique():
+    subset = df_daily_steps[df_daily_steps["test_subject"] == subject]
+    ax[2,0].scatter(subset["day_time"], subset["daily_step_count"], color=subject_colors[subject], label=f'Subject {subject}')
+ax[2,0].set_title('Daily steps')
+ax[2,0].tick_params(axis='x', labelrotation=45)
+ax[2,0].legend()
+
+plt.show() # This is a bit laggy, so it should be commented out

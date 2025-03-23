@@ -3,6 +3,8 @@ import pandas as pd
 import ast
 import os
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
 
 def convert_user_1(raw_data):
 
@@ -92,8 +94,22 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
         # Add test subject column
     heart_rate_data_filtered["test_subject"] = 2
 
+        # Add location 
+    heart_rate_data_filtered["date_time_parsed"] = pd.to_datetime(
+        heart_rate_data_filtered["date_time"], format="%Y:%m:%d %H:%M:%S"
+    )
+
+    start = datetime(2025, 3, 4)
+    end = datetime(2025, 3, 7)
+
+    heart_rate_data_filtered["location"] = heart_rate_data_filtered["date_time_parsed"].apply(
+        lambda dt: "Torremolinos" if start <= dt <= end else "Eindhoven"
+    )
+
+    heart_rate_data_filtered = heart_rate_data_filtered.drop(columns=["date_time_parsed"])
+
         # Order columns
-    heart_rate_data_filtered = heart_rate_data_filtered[["heart_rate", "heart_rate_min", "heart_rate_max", "date_time", "time_offset", "test_subject"]]
+    heart_rate_data_filtered = heart_rate_data_filtered[["heart_rate", "heart_rate_min", "heart_rate_max", "date_time", "time_offset", "test_subject", "location"]]
 
     # Final adjustments step count data
         # Rename column names
@@ -116,8 +132,22 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
         # Add test subject column
     step_count_data_filtered["test_subject"] = 2
 
+        # Add location 
+    step_count_data_filtered["date_time_parsed"] = pd.to_datetime(
+        step_count_data_filtered["start_time_interval"], format="%Y:%m:%d %H:%M:%S"
+    )
+
+    start = datetime(2025, 3, 4)
+    end = datetime(2025, 3, 7)
+
+    step_count_data_filtered["location"] = step_count_data_filtered["date_time_parsed"].apply(
+        lambda dt: "Torremolinos" if start <= dt <= end else "Eindhoven"
+    )
+
+    step_count_data_filtered = step_count_data_filtered.drop(columns=["date_time_parsed"])
+
         # Order columns
-    step_count_data_filtered = step_count_data_filtered[["step_count", "distance_covered", "speed", "calories_burned", "start_time_interval", "end_time_interval", "time_offset", "test_subject"]]
+    step_count_data_filtered = step_count_data_filtered[["step_count", "distance_covered", "speed", "calories_burned", "start_time_interval", "end_time_interval", "time_offset", "test_subject", "location"]]
 
 
     # Final adjustments step daily trend data
@@ -139,8 +169,22 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
         # Add test subject column
     step_daily_trend_data_filtered["test_subject"] = 2
 
+        # Add location 
+    step_daily_trend_data_filtered["date_time_parsed"] = pd.to_datetime(
+        step_daily_trend_data_filtered["day_time"], format="%Y:%m:%d"
+    )
+
+    start = datetime(2025, 3, 4)
+    end = datetime(2025, 3, 7)
+
+    step_daily_trend_data_filtered["location"] = step_daily_trend_data_filtered["date_time_parsed"].apply(
+        lambda dt: "Torremolinos" if start <= dt <= end else "Eindhoven"
+    )
+
+    step_daily_trend_data_filtered = step_daily_trend_data_filtered.drop(columns=["date_time_parsed"])
+
         # Order columns
-    step_daily_trend_data_filtered = step_daily_trend_data_filtered[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject"]]
+    step_daily_trend_data_filtered = step_daily_trend_data_filtered[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject", "location"]]
     
     # Save data frames
     heart_rate_data_filtered.to_csv('converted_data/heart_rate_data_user_2.csv')
@@ -229,3 +273,84 @@ def convert_user_5(raw_data: str) -> None:
 # convert_user_3()
 # convert_user_4()
 # convert_user_5('raw_data/raw_data_user_5.csv')
+
+
+def merge_users_data() -> None:
+    heart_rate_data = [pd.read_csv(f"converted_data/heart_rate_data_user_{i}.csv") for i in range(1,6)]
+    step_count_daily_trend_data = [pd.read_csv(f"converted_data/step_count_daily_trend_data_user_{i}.csv") for i in range(1,6)]
+    step_count_data = [pd.read_csv(f"converted_data/step_count_data_user_{i}.csv") for i in range(1,6)]
+
+    # Concatenate function
+    concat_data = lambda x: pd.concat(x, axis=0, ignore_index=True)
+
+    heart_rate_concat_data = concat_data(heart_rate_data).sort_values(by=["test_subject", "date_time"])
+    step_count_daily_trend_concat_data = concat_data(step_count_daily_trend_data).sort_values(by=["test_subject", "day_time"])
+    step_count_concat_data = concat_data(step_count_data).sort_values(by=["test_subject", "start_time_interval"])
+
+    heart_rate_concat_data.to_csv("merged_data/heart_rate_data_merged.csv")
+    step_count_daily_trend_concat_data.to_csv("merged_data/step_count_daily_trend_data_merged.csv")
+    step_count_concat_data.to_csv("merged_data/step_count_data_merged.csv")
+    
+    return None
+    
+
+def map_weather_to_health_data(file_path: str) -> None:
+    # Load weather data
+    weather_data = pd.concat([
+        pd.read_csv("weather_data/Weather Data Hourly 2025-02-10 to 2025-02-28.csv"),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-01 to 2025-03-16.csv"),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-17 to 2025-03-30.csv")
+    ], axis=0, ignore_index=True).sort_values(by=["name", "datetime"]).reset_index(drop=True)
+
+    # Convert ISO format to datetime string
+    weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+
+    # Load and parse health data
+    health_data = pd.read_csv(file_path)
+    if "Unnamed: 0" in health_data.columns:
+        health_data = health_data.drop(columns=["Unnamed: 0"])
+
+    # Transform date_time column to datetime format
+    health_data["date_time"] = pd.to_datetime(health_data["date_time"], format="%Y:%m:%d %H:%M:%S")
+
+    # Filter time range
+    start = datetime.strptime("2025:02:10 00:00:00", "%Y:%m:%d %H:%M:%S")
+    end = datetime.strptime("2025:03:30 23:59:00", "%Y:%m:%d %H:%M:%S")
+    mask = (health_data["date_time"] >= start) & (health_data["date_time"] <= end)
+    filtered_health_data = health_data.loc[mask].copy()
+
+    # Convert date_time format back to string
+    filtered_health_data["date_time"] = filtered_health_data["date_time"].dt.strftime("%Y:%m:%d %H:%M:%S")
+
+    # Round to nearest hour
+    def determine_nearest_hour(x):
+        dt = datetime.strptime(x, "%Y:%m:%d %H:%M:%S")
+        if dt.minute >= 30:
+            return (dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)).strftime("%Y:%m:%d %H:%M:%S")
+        else:
+            return dt.replace(minute=0, second=0, microsecond=0).strftime("%Y:%m:%d %H:%M:%S")
+
+    filtered_health_data["date_time_w_rounded_hour"] = filtered_health_data["date_time"].apply(determine_nearest_hour)
+
+    # Add default location if missing
+    if "location" not in filtered_health_data.columns:
+        filtered_health_data.loc[:, "location"] = "Eindhoven"
+
+    # Merge with weather data
+    merged_data = pd.merge(
+        filtered_health_data,
+        weather_data,
+        how="left",
+        left_on=["location", "date_time_w_rounded_hour"],
+        right_on=["name", "datetime"]
+    )
+
+    merged_data.to_csv(f"merged_weather_health_data/{file_path.split("/")[1].replace(".csv", "")}_incl_weather.csv")
+
+    return None
+
+
+# merge_users_data()
+# map_weather_to_health_data("merged_data/heart_rate_data_merged.csv")
+# map_weather_to_health_data("merged_data/step_count_daily_trend_data_merged.csv")
+# map_weather_to_health_data("merged_data/step_count_data_merged.csv")

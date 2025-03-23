@@ -62,7 +62,16 @@ def combine_data_user_2 (raw_data_path: str="raw_data/raw_data_user_2"):
         long = location_data_update["longitude"]
         start_time = location_data_update["start_time"]
 
-        trash, trash, trash, city, trash, trash, trash, trash = geolocator.reverse((lat, long)).address.split(", ")
+        address = geolocator.reverse((lat, long)).raw.get("address", {})
+        city = (
+            address.get("city") or
+            address.get("town") or
+            address.get("village") or
+            address.get("hamlet") or
+            address.get("municipality") or
+            address.get("county") or
+            "Unknown"
+        )
 
         # Transform time to readable format
         dt = datetime.fromtimestamp(int(start_time)/1000)
@@ -83,9 +92,19 @@ def combine_data_user_2 (raw_data_path: str="raw_data/raw_data_user_2"):
             }
         )
         
-
     return location_data_updates_incl_city_names
 
 
-temp = combine_data_user_2()
-print(temp)
+# temp = combine_data_user_2()
+# print(temp)
+
+
+tag = "location_data_internal"
+
+def find_file(filename=tag, folder=os.path.join("raw_data/raw_data_user_2", "jsons")):
+    for root, dirs, files in os.walk(folder):
+        if filename in files:
+            return os.path.join(root, filename)
+    return None
+
+print(find_file())

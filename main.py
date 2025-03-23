@@ -93,7 +93,12 @@ df_heartrate = df_heartrate[df_heartrate['date_time'] < dt.datetime(2030, 4, 10)
 # Also filter out data before february 2025, because this is outside our study range. Using the course start date as the cutoff point
 df_heartrate = df_heartrate[df_heartrate['date_time'] > dt.datetime(2025, 2, 10)]
 
-# TODO: more cleaning
+# Add date columns (useful for merging later)
+df_heartrate['date'] = df_heartrate['date_time'].dt.date
+df_steps['date'] = df_steps['start_time_interval'].dt.date
+df_daily_steps['date'] = df_daily_steps['day_time'].dt.date
+
+# TODO: more cleaning if needed
 
 # Basic visualization
 fig, ax = plt.subplots(3, 1, squeeze=False, figsize=(12,12))
@@ -129,4 +134,25 @@ ax[2,0].set_title('Daily steps')
 ax[2,0].tick_params(axis='x', labelrotation=45)
 ax[2,0].legend()
 
-plt.show() # This is a bit laggy, so it should be commented out
+#plt.show() # This is a bit laggy, so it should be commented out
+
+# Load weather data
+df_weather = pd.read_csv('weather_data/Weather Data 2025-02-10 to 2025-04-06.csv')
+# Filter out columns that are not relevant to us
+df_weather = df_weather.drop(columns=['description', 'icon', 'stations', 'solarenergy', 'severerisk', 'feelslikemax', 'feelslikemin'])
+# Split conditions into separate columns
+df_cond = df_weather['conditions'].str.get_dummies(sep=', ')
+df_weather = pd.concat([df_weather, df_cond], axis=1)
+# Datetime to proper format
+df_weather['datetime'] = pd.to_datetime(df_weather['datetime'])
+# Add date column for proper merging, just to be safe
+df_weather['date'] = df_weather['datetime'].dt.date
+# Temporarily drop non-eindhoven weather data - this will have to be manually adjusted later somehow
+df_weather = df_weather[df_weather['name'] == 'Eindhoven']
+# Merge datasets
+df_heartrate = pd.merge(df_heartrate, df_weather, on='date', how='left')
+df_steps = pd.merge(df_steps, df_weather, on='date', how='left')
+df_daily_steps = pd.merge(df_daily_steps, df_weather, on='date', how='left')
+
+# Further cleaning after merge (TODO)
+print(df_heartrate)

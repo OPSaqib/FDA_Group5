@@ -1,0 +1,6 @@
+﻿com.samsung.shealth.service_preferences,6293007,1
+text_value,service_id,float_value,update_time,create_time,long_value,key,tag,blob_value,int_value,deviceuuid,pkg_name,double_value,datauuid
+,tracker.daily_activity,,2025-01-18 15:13:40.794,2025-01-18 15:13:40.794,1737216820788,daily_activity_all_target_achievement_time,,,,R0X8Tl1DGH,com.sec.android.app.shealth,,84e3dfe7-7d03-4acb-aa8e-1ff52a4bd52f,
+,program.sleep_coaching,,2025-03-23 08:54:37.270,2025-01-21 10:31:01.653,,before_sleep_coaching_condition,,910a3c99-39d4-4ab8-81e7-45a16daaf35e.blob_value.json,,R0X8Tl1DGH,com.sec.android.app.shealth,,910a3c99-39d4-4ab8-81e7-45a16daaf35e,
+,tracker.daily_activity,,2025-03-22 12:43:22.091,2025-01-25 16:04:40.332,1742601600000,da_all_achievement_time,,,,R0X8Tl1DGH,com.sec.android.app.shealth,,da_all_achievement_time,
+,tracker.daily_activity,,2025-03-01 14:57:26.627,2025-02-01 14:05:52.851,1740787200000,da_monthly_goal_first_day,,,,R0X8Tl1DGH,com.sec.android.app.shealth,,da_monthly_goal_first_day,

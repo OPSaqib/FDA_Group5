@@ -1,0 +1,15 @@
+﻿com.samsung.health.user_profile,6293007,10
+text_value,create_sh_ver,float_value,modify_sh_ver,update_time,create_time,long_value,key,blob_value,int_value,deviceuuid,pkg_name,double_value,datauuid
+kg,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,weight_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000007,
+cm,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,height_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000009,
+km,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,distance_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-00000000000c,
+C,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,temperature_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-00000000000d,
+mmol/L,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,blood_glucose_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-00000000000e,
+%,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,hba1c_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000012,
+mmHg,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,blood_pressure_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000013,
+ml,,,,1970-01-01 00:00:00.001,1970-01-01 00:00:00.001,,water_unit,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000014,
+NLD,62850050,,62850050,2025-01-14 15:14:05.741,2025-01-14 15:14:05.751,,country,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000001,
+20000101,62850050,,62850050,2025-01-14 15:14:05.742,2025-01-14 15:14:05.755,,birth_date,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-00000000000a,
+,62850050,,62930070,2025-03-23 11:00:04.856,2025-01-14 15:14:36.889,,intention_survey,00000000-0000-0000-0000-00000000001c.intention_survey.json,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-00000000001c,
+,62850050,,62920010,2025-02-18 18:51:14.025,2025-01-14 15:14:37.772,,dashboard_config,00000000-0000-0000-0000-000000000016.dashboard_config.json,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000016,
+,62900750,,62900750,2025-01-21 10:31:07.101,2025-01-19 12:09:46.515,,social_id,,,R0X8Tl1DGH,com.sec.android.app.shealth,,00000000-0000-0000-0000-000000000015,

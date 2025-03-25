@@ -227,7 +227,7 @@ def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
 
 def convert_user_4(raw_data):
     # Input and output file paths
-    input_file = 'merged_health_fitness_data.csv'  # RAW DATA FILE
+    input_file = 'raw_data_user_4.csv'  # RAW DATA FILE
 
     # FILES TO OUTPUT:
     heart_rate_output_file = 'heart_rate_data.csv'
@@ -272,7 +272,12 @@ def convert_user_4(raw_data):
                     bpm = value_dict['bpm']
                     heart_rate_data.append({
                         'date_time': dt.strftime('%Y-%m-%d %H:%M:%S'),
-                        'heart_rate': bpm
+                        'heart_rate': bpm,
+                        'heart_rate_min': math.nan,
+                        'heart_rate_max': math.nan,
+                        'time_offset': 'UTC+0100',
+                        'test_subject': 4,
+                        'location': 'EHV'
                     })
                 
                 elif key == 'steps':
@@ -288,16 +293,16 @@ def convert_user_4(raw_data):
     # Write FILE 1: heart_rate_data.csv
     with open(heart_rate_output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['date_time', 'heart_rate'])
+        writer.writerow(['date_time', 'heart_rate', 'heart_rate_min', 'heart_rate_max', 'time_offset', 'test_subject', 'location'])
         for entry in heart_rate_data:
-            writer.writerow([entry['date_time'], entry['heart_rate']])
+            writer.writerow([entry['date_time'], entry['heart_rate'], entry['heart_rate_min'], entry['heart_rate_max'], entry['time_offset'], entry['test_subject'], entry['location']])
 
     # Write FILE 2: daily_steps_distance.csv
     with open(daily_steps_output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['day_time', 'daily_step_count', 'distance_covered'])
+        writer.writerow(['day_time', 'daily_step_count', 'distance_covered', 'speed', 'calories_burned', 'test_subject', 'location'])
         for day in sorted(daily_data.keys()):
-            writer.writerow([day, daily_data[day]['steps'], daily_data[day]['distance']])
+            writer.writerow([day, daily_data[day]['steps'], daily_data[day]['distance'], math.nan, math.nan, 4, 'EHV'])
 
     print(f"Files generated successfully: {heart_rate_output_file}, {daily_steps_output_file}")
 

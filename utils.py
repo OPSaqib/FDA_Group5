@@ -11,10 +11,10 @@ import pytz
 import math
 
 
-def convert_user_1(raw_data):
+def convert_user_1(raw_data: str = "raw_data_heartrate_upload.csv") -> None:
 
     df = pd.read_csv(
-        "raw_data_heartrate_upload.csv",
+        raw_data,
         skiprows=1,        # Skip that very first line
         usecols=range(21)  # Only read columns 0..20
     )
@@ -39,7 +39,7 @@ def convert_user_1(raw_data):
 
     df_hr.to_csv('Processed_heart_rate_data1.csv', index=False)
     
-    return
+    return None
 
 
 def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
@@ -199,7 +199,7 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     return None
 
 
-def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
+def convert_user_3(raw_data_path: str = "raw_data_user3.csv") -> None:
 
     # Load the raw heart rate CSV exported from Fitbit processing
     df = pd.read_csv(
@@ -223,10 +223,10 @@ def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
     # Save the cleaned data
     df.to_csv('Processed_heart_rate_data_user3.csv', index=False)
 
-    return
+    return None
 
 
-def convert_user_4(raw_data_folder: str= "raw_data"):
+def convert_user_4(raw_data_folder: str= "raw_data") -> None:
     # Input and output file paths
     input_file = f'{raw_data_folder}/raw_data_user_4.csv'  # RAW DATA FILE
 
@@ -363,6 +363,8 @@ def convert_user_4(raw_data_folder: str= "raw_data"):
     output_df.to_csv(step_count_data_file, index=False)
 
     print(f"Transformation complete. Output saved to {step_count_data_file}")
+
+    return None
 
 
 def convert_user_5(raw_data: str = 'raw_data/raw_data_user_5.csv') -> None:
@@ -531,6 +533,7 @@ def map_weather_to_step_count_data_hourly(file_path: str) -> None:
 
     return None
 
+
 def map_weather_to_heart_rate_data_daily(file_path: str) -> None:
     pass
 
@@ -544,11 +547,11 @@ def map_weather_to_step_count_data_daily(file_path: str) -> None:
 
 
 ## Execute functions
-# convert_user_1()
-# convert_user_2()
-# convert_user_3()
-# convert_user_4()
-# convert_user_5()
+convert_user_1()
+convert_user_2()
+convert_user_3()
+convert_user_4()
+convert_user_5()
 
 # merge_users_data()
 

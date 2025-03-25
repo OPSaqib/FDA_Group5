@@ -8,6 +8,7 @@ import csv
 import json
 from collections import defaultdict
 import pytz
+import math
 
 
 def convert_user_1(raw_data):
@@ -93,14 +94,14 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     heart_rate_data_filtered = heart_rate_data_filtered.rename(columns=heart_rate_column_map)
 
         # Filter date_time to correct format
-    heart_rate_data_filtered["date_time"] = pd.to_datetime(heart_rate_data_filtered["date_time"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+    heart_rate_data_filtered["date_time"] = pd.to_datetime(heart_rate_data_filtered["date_time"]).dt.strftime("%Y-%m-%d %H:%M:%S")
     
         # Add test subject column
     heart_rate_data_filtered["test_subject"] = 2
 
         # Add location 
     heart_rate_data_filtered["date_time_parsed"] = pd.to_datetime(
-        heart_rate_data_filtered["date_time"], format="%Y:%m:%d %H:%M:%S"
+        heart_rate_data_filtered["date_time"], format="%Y-%m-%d %H:%M:%S"
     )
 
     start = datetime(2025, 3, 4)
@@ -127,8 +128,8 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     step_count_data_filtered = step_count_data_filtered.rename(columns=step_count_column_map)
 
         # Filter start & end time to correct format
-    step_count_data_filtered["start_time_interval"] = pd.to_datetime(step_count_data_filtered["start_time_interval"]).dt.strftime("%Y:%m:%d %H:%M:%S")
-    step_count_data_filtered["end_time_interval"] = pd.to_datetime(step_count_data_filtered["end_time_interval"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+    step_count_data_filtered["start_time_interval"] = pd.to_datetime(step_count_data_filtered["start_time_interval"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+    step_count_data_filtered["end_time_interval"] = pd.to_datetime(step_count_data_filtered["end_time_interval"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
         # step_count to float
     step_count_data_filtered["step_count"] = step_count_data_filtered["step_count"].astype(float)
@@ -138,7 +139,7 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
 
         # Add location 
     step_count_data_filtered["date_time_parsed"] = pd.to_datetime(
-        step_count_data_filtered["start_time_interval"], format="%Y:%m:%d %H:%M:%S"
+        step_count_data_filtered["start_time_interval"], format="%Y-%m-%d %H:%M:%S"
     )
 
     start = datetime(2025, 3, 4)
@@ -165,7 +166,7 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
     step_daily_trend_data_filtered = step_daily_trend_data_filtered.rename(columns=step_daily_trend_column_map)
 
         # Filter day time to correct format
-    step_daily_trend_data_filtered["day_time"] = pd.to_datetime(step_daily_trend_data_filtered["day_time"]).dt.strftime("%Y:%m:%d")
+    step_daily_trend_data_filtered["day_time"] = pd.to_datetime(step_daily_trend_data_filtered["day_time"]).dt.strftime("%Y-%m-%d")
 
         # daily step count to float
     step_daily_trend_data_filtered["daily_step_count"] = step_daily_trend_data_filtered["daily_step_count"].astype(float)
@@ -175,7 +176,7 @@ def convert_user_2(folder_path: str="raw_data/raw_data_user_2") -> None:
 
         # Add location 
     step_daily_trend_data_filtered["date_time_parsed"] = pd.to_datetime(
-        step_daily_trend_data_filtered["day_time"], format="%Y:%m:%d"
+        step_daily_trend_data_filtered["day_time"], format="%Y-%m-%d"
     )
 
     start = datetime(2025, 3, 4)
@@ -225,14 +226,14 @@ def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
     return
 
 
-def convert_user_4(raw_data):
+def convert_user_4(raw_data_folder: str= "raw_data"):
     # Input and output file paths
-    input_file = 'raw_data_user_4.csv'  # RAW DATA FILE
+    input_file = f'{raw_data_folder}/raw_data_user_4.csv'  # RAW DATA FILE
 
     # FILES TO OUTPUT:
-    heart_rate_output_file = 'heart_rate_data.csv'
-    daily_steps_output_file = 'daily_steps_distance.csv'
-    step_count_data_file = 'step_count_data_user_4.csv'
+    heart_rate_output_file = 'converted_data/heart_rate_data_user_4.csv'
+    daily_steps_output_file = 'converted_data/step_count_daily_trend_user_4.csv'
+    step_count_data_file = 'converted_data/step_count_data_user_4.csv'
 
     # For FILE 1: Heart Rate Data
     heart_rate_data = []
@@ -277,7 +278,7 @@ def convert_user_4(raw_data):
                         'heart_rate_max': math.nan,
                         'time_offset': 'UTC+0100',
                         'test_subject': 4,
-                        'location': 'EHV'
+                        'location': 'Eindhoven'
                     })
                 
                 elif key == 'steps':
@@ -302,7 +303,7 @@ def convert_user_4(raw_data):
         writer = csv.writer(f)
         writer.writerow(['day_time', 'daily_step_count', 'distance_covered', 'speed', 'calories_burned', 'test_subject', 'location'])
         for day in sorted(daily_data.keys()):
-            writer.writerow([day, daily_data[day]['steps'], daily_data[day]['distance'], math.nan, math.nan, 4, 'EHV'])
+            writer.writerow([day, daily_data[day]['steps'], daily_data[day]['distance'], math.nan, math.nan, 4, 'Eindhoven'])
 
     print(f"Files generated successfully: {heart_rate_output_file}, {daily_steps_output_file}")
 
@@ -364,9 +365,7 @@ def convert_user_4(raw_data):
     print(f"Transformation complete. Output saved to {step_count_data_file}")
 
 
-
-
-def convert_user_5(raw_data: str) -> None:
+def convert_user_5(raw_data: str = 'raw_data/raw_data_user_5.csv') -> None:
     '''
     Function to convert raw data for user 5, device: MiBand 7
     '''
@@ -408,14 +407,6 @@ def convert_user_5(raw_data: str) -> None:
     return
 
 
-# Execute functions
-# convert_user_1()
-# convert_user_2()
-# convert_user_3()
-# convert_user_4()
-# convert_user_5('raw_data/raw_data_user_5.csv')
-
-
 def merge_users_data() -> None:
     heart_rate_data = [pd.read_csv(f"converted_data/heart_rate_data_user_{i}.csv") for i in range(1,6)]
     step_count_daily_trend_data = [pd.read_csv(f"converted_data/step_count_daily_trend_user_{i}.csv") for i in range(1,6)]
@@ -426,8 +417,6 @@ def merge_users_data() -> None:
     # Check if column location exists
     def add_location_to_df(df: pd.DataFrame) -> pd.DataFrame:
         if "location" not in df.columns:
-            df["location"] = "Eindhoven"
-        elif ("location" in df.columns) and (df.loc[0, "location"] == "EHV"):
             df["location"] = "Eindhoven"
 
         return df
@@ -472,16 +461,16 @@ def merge_users_data() -> None:
     return None
     
 
-def map_weather_to_health_data_hourly(file_path: str) -> None:
-    # Load weather data
+def map_weather_to_heart_rate_data_hourly(file_path: str) -> None:
+    # Load hourly weather data
     weather_data = pd.concat([
-        pd.read_csv("weather_data/Weather Data Hourly 2025-02-10 to 2025-02-28.csv"),
-        pd.read_csv("weather_data/Weather Data Hourly 2025-03-01 to 2025-03-16.csv"),
-        pd.read_csv("weather_data/Weather Data Hourly 2025-03-17 to 2025-03-30.csv")
+        pd.read_csv("weather_data/Weather Data Hourly 2025-02-10 to 2025-02-28.csv", index_col=False),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-01 to 2025-03-16.csv", index_col=False),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-17 to 2025-03-30.csv", index_col=False)
     ], axis=0, ignore_index=True).sort_values(by=["name", "datetime"]).reset_index(drop=True)
 
     # Convert ISO format to datetime string
-    weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y:%m:%d %H:%M:%S")
+    weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Load and parse health data
     health_data = pd.read_csv(file_path)
@@ -489,30 +478,26 @@ def map_weather_to_health_data_hourly(file_path: str) -> None:
         health_data = health_data.drop(columns=["Unnamed: 0"])
 
     # Transform date_time column to datetime format
-    health_data["date_time"] = pd.to_datetime(health_data["date_time"], format="%Y:%m:%d %H:%M:%S")
+    health_data["date_time"] = pd.to_datetime(health_data["date_time"], format="%Y-%m-%d %H:%M:%S")
 
     # Filter time range
-    start = datetime.strptime("2025:02:10 00:00:00", "%Y:%m:%d %H:%M:%S")
-    end = datetime.strptime("2025:03:30 23:59:00", "%Y:%m:%d %H:%M:%S")
+    start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
+    end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
     mask = (health_data["date_time"] >= start) & (health_data["date_time"] <= end)
     filtered_health_data = health_data.loc[mask].copy()
 
     # Convert date_time format back to string
-    filtered_health_data["date_time"] = filtered_health_data["date_time"].dt.strftime("%Y:%m:%d %H:%M:%S")
+    filtered_health_data["date_time"] = filtered_health_data["date_time"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Round to nearest hour
     def determine_nearest_hour(x):
-        dt = datetime.strptime(x, "%Y:%m:%d %H:%M:%S")
+        dt = datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
         if dt.minute >= 30:
-            return (dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)).strftime("%Y:%m:%d %H:%M:%S")
+            return (dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
         else:
-            return dt.replace(minute=0, second=0, microsecond=0).strftime("%Y:%m:%d %H:%M:%S")
+            return dt.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
 
     filtered_health_data["date_time_w_rounded_hour"] = filtered_health_data["date_time"].apply(determine_nearest_hour)
-
-    # Add default location if missing
-    if "location" not in filtered_health_data.columns:
-        filtered_health_data.loc[:, "location"] = "Eindhoven"
 
     # Merge with weather data
     merged_data = pd.merge(
@@ -523,22 +508,54 @@ def map_weather_to_health_data_hourly(file_path: str) -> None:
         right_on=["name", "datetime"]
     )
 
-    merged_data.to_csv(f"merged_weather_health_data/{file_path.split('/')[1].replace('.csv', '')}_incl_weather.csv")
+    if not os.path.exists("merged_weather_health_data"):
+        os.makedirs("merged_weather_health_data")
+
+    merged_data.to_csv("merged_weather_health_data/step_count_data_merged_incl_weather_hourly.csv")
 
     return None
 
 
-def map_wather_to_health_data_daily(file_path:str) -> None:
+def map_weather_to_step_count_data_hourly(file_path: str) -> None:
+    # Load hourly weather data
+    weather_data = pd.concat([
+        pd.read_csv("weather_data/Weather Data Hourly 2025-02-10 to 2025-02-28.csv", index_col=False),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-01 to 2025-03-16.csv", index_col=False),
+        pd.read_csv("weather_data/Weather Data Hourly 2025-03-17 to 2025-03-30.csv", index_col=False)
+    ], axis=0, ignore_index=True).sort_values(by=["name", "datetime"]).reset_index(drop=True)
 
+    # Convert ISO format to datetime string
+    weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 
     return None
 
+def map_weather_to_heart_rate_data_daily(file_path: str) -> None:
+    pass
 
 
+def map_weather_to_step_count_daily_trend_data_daily(file_path: str) -> None:
+    pass
+
+
+def map_weather_to_step_count_data_daily(file_path: str) -> None:
+    pass
+
+
+## Execute functions
+# convert_user_1()
+# convert_user_2()
+# convert_user_3()
+# convert_user_4()
+# convert_user_5()
 
 # merge_users_data()
-map_weather_to_health_data_hourly("merged_data/heart_rate_data_merged.csv")
-# map_weather_to_health_data_hourly("merged_data/step_count_daily_trend_merged.csv")
-# map_weather_to_health_data_hourly("merged_data/step_count_data_merged.csv")
+
+# map_weather_to_heart_rate_data_hourly("merged_data/heart_rate_data_merged.csv")
+# map_weather_to_step_count_data_hourly("merged_data/step_count_data_merged.csv")
+
+# map_weather_to_heart_rate_data_daily("merged_data/heart_rate_data_merged.csv")
+# map_weather_to_step_count_daily_trend_data_daily("merged_data/step_count_daily_trend_merged.csv")
+# map_weather_to_step_count_data_daily("merged_data/step_count_data_merged.csv")
+

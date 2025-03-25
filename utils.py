@@ -480,40 +480,55 @@ def map_weather_to_heart_rate_data_hourly(file_path: str) -> None:
         health_data = health_data.drop(columns=["Unnamed: 0"])
 
     # Transform date_time column to datetime format
+    ###### TODO: remove this part when user 1 fixes the code.
+    health_data['date_time'] = health_data['date_time'].str.replace(
+        r'(\d{4}-\d{2}-\d{2}) (\d{2})(\d{2}:\d{2})',
+        r'\1 \2:\3',
+        regex=True
+    )
+    ######
     health_data["date_time"] = pd.to_datetime(health_data["date_time"], format="%Y-%m-%d %H:%M:%S")
 
-    # Filter time range
+    # Include an hourly start_time_interval
+    health_data['date_time_hour_start'] = health_data['date_time'].dt.floor('h')
+
+    # Aggregate current dataframe to get hourly values
+    grouped_df = health_data.groupby(['test_subject', 'date_time_hour_start']).agg(
+        heart_rate_min=('heart_rate', 'min'),
+        heart_rate_max=('heart_rate', 'max'),
+        time_offset=('time_offset', 'first'),
+        location=('location', 'first')
+    ).reset_index()
+
+    # Add end_time_interval_hour
+    grouped_df['date_time_hour_end'] = grouped_df['date_time_hour_start'].apply(lambda x: x + pd.Timedelta(hours=1))
+    
+    # Filter data to predefined time range
     start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
     end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
-    mask = (health_data["date_time"] >= start) & (health_data["date_time"] <= end)
-    filtered_health_data = health_data.loc[mask].copy()
+    mask = (grouped_df["date_time_hour_start"] >= start) & (grouped_df["date_time_hour_start"] <= end)
+    filtered_health_data = grouped_df.loc[mask].copy()
 
-    # Convert date_time format back to string
-    filtered_health_data["date_time"] = filtered_health_data["date_time"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Transform back to string
+    filtered_health_data['date_time_hour_start'] = filtered_health_data['date_time_hour_start'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+    filtered_health_data['date_time_hour_end'] = filtered_health_data['date_time_hour_end'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 
-    # Round to nearest hour
-    def determine_nearest_hour(x):
-        dt = datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
-        if dt.minute >= 30:
-            return (dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            return dt.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
-
-    filtered_health_data["date_time_w_rounded_hour"] = filtered_health_data["date_time"].apply(determine_nearest_hour)
+    # Order columns
+    filtered_health_data = filtered_health_data[["heart_rate_min", "heart_rate_max", "date_time_hour_start", "date_time_hour_end", "time_offset", "test_subject", "location"]]
 
     # Merge with weather data
     merged_data = pd.merge(
         filtered_health_data,
         weather_data,
         how="left",
-        left_on=["location", "date_time_w_rounded_hour"],
+        left_on=["location", "date_time_hour_start"],
         right_on=["name", "datetime"]
     )
 
     if not os.path.exists("merged_weather_health_data"):
         os.makedirs("merged_weather_health_data")
 
-    merged_data.to_csv("merged_weather_health_data/step_count_data_merged_incl_weather_hourly.csv")
+    merged_data.to_csv("merged_weather_health_data/heart_rate_data_merged_incl_weather_hourly.csv")
 
     return None
 
@@ -529,7 +544,55 @@ def map_weather_to_step_count_data_hourly(file_path: str) -> None:
     # Convert ISO format to datetime string
     weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
+    health_data = pd.read_csv(file_path)
+    if "Unnamed: 0" in health_data.columns:
+        health_data = health_data.drop(columns=["Unnamed: 0"])
 
+    # Transform to datetime
+    health_data['start_time_interval'] = pd.to_datetime(health_data['start_time_interval'])
+
+    # Include an hourly start_time_interval
+    health_data['start_time_interval_hour'] = health_data['start_time_interval'].dt.floor('h')
+
+    # Aggregate current dataframe to get hourly values
+    grouped_df = health_data.groupby(['test_subject', 'start_time_interval_hour']).agg({
+        'step_count': 'sum',
+        'distance_covered': 'sum',
+        'speed': 'mean',
+        'calories_burned': 'sum',
+        'time_offset':'first',
+        'location':'first'
+    }).reset_index()
+
+    # Add end_time_interval_hour
+    grouped_df['end_time_interval_hour'] = grouped_df['start_time_interval_hour'].apply(lambda x: x + pd.Timedelta(hours=1))
+    
+    # Filter data to predefined time range
+    start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
+    end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
+    mask = (grouped_df["start_time_interval_hour"] >= start) & (grouped_df["start_time_interval_hour"] <= end)
+    filtered_health_data = grouped_df.loc[mask].copy()
+
+    # Transform back to string
+    filtered_health_data['start_time_interval_hour'] = filtered_health_data['start_time_interval_hour'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+    filtered_health_data['end_time_interval_hour'] = filtered_health_data['end_time_interval_hour'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+
+    # Order columns
+    filtered_health_data = filtered_health_data[["step_count", "distance_covered", "speed", "calories_burned", "start_time_interval_hour", "end_time_interval_hour", "time_offset", "test_subject", "location"]]
+
+    # Merge with weather data
+    merged_data = pd.merge(
+        filtered_health_data,
+        weather_data,
+        how="left",
+        left_on=["location", "start_time_interval_hour"],
+        right_on=["name", "datetime"]
+    )
+
+    if not os.path.exists("merged_weather_health_data"):
+        os.makedirs("merged_weather_health_data")
+
+    merged_data.to_csv("merged_weather_health_data/step_count_data_merged_incl_weather_hourly.csv")
 
     return None
 
@@ -547,11 +610,11 @@ def map_weather_to_step_count_data_daily(file_path: str) -> None:
 
 
 ## Execute functions
-convert_user_1()
-convert_user_2()
-convert_user_3()
-convert_user_4()
-convert_user_5()
+# convert_user_1()
+# convert_user_2()
+# convert_user_3()
+# convert_user_4()
+# convert_user_5()
 
 # merge_users_data()
 

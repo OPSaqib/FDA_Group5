@@ -503,7 +503,7 @@ def map_weather_to_heart_rate_data(file_path: str, method: str='daily') -> None:
     else:
         raise ValueError("Unknown method!")
 
-    # Aggregate current dataframe to get hourly values
+    # Aggregate current dataframe to get custom values
     grouped_df = health_data.groupby(['test_subject', f'date_time_start_{method}']).agg(
         heart_rate_min=('heart_rate', 'min'),
         heart_rate_max=('heart_rate', 'max'),
@@ -630,12 +630,60 @@ def map_weather_to_step_count_data(file_path: str, method: str='daily') -> None:
     return None
 
 
-def map_weather_to_step_count_daily_trend_data(file_path: str) -> None:
-    pass
+def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='daily') -> None:
+    
+    if method == 'hourly':
+        raise ValueError("Method 'hourly' is not possible for daily trend!")
+    elif method != 'daily':
+        raise ValueError("Method unknown!")
+    
+    weather_data = pd.read_csv("weather_data/Weather Data Daily 2025-02-10 to 2025-03-30.csv", 
+                                index_col=False).sort_values(by=["name", "datetime"]).reset_index(drop=True)
+    
+    # Convert ISO format to datetime string
+    weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    health_data = pd.read_csv(file_path)
+    if "Unnamed: 0" in health_data.columns:
+        health_data = health_data.drop(columns=["Unnamed: 0"])
+
+    
+
+    # Transform to datetime
+    health_data["day_time"] = pd.to_datetime(pd.to_datetime(health_data["day_time"]).dt.strftime("%Y-%m-%d %H:%M:%S"))
 
 
+    # Filter data to predefined time range
+    start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
+    end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
+    mask = (health_data["day_time"] >= start) & (health_data["day_time"] <= end)
+    filtered_health_data = health_data.loc[mask].copy()
 
-## Execute functions
+    # Transform back to string
+    filtered_health_data[f"day_time"] = filtered_health_data[f"day_time"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+
+    # Order columns
+    filtered_health_data = filtered_health_data[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject", "location"]]
+
+    # Merge with weather data
+    merged_data = pd.merge(
+        filtered_health_data,
+        weather_data,
+        how="left",
+        left_on=["location", "day_time"],
+        right_on=["name", "datetime"]
+    )
+
+    if not os.path.exists("merged_weather_health_data"):
+        os.makedirs("merged_weather_health_data")
+
+    merged_data.to_csv(f"merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_{method}.csv")
+
+    return None
+
+
+### Execute functions --> move to main.py ###
+
 # convert_user_1()
 # convert_user_2()
 # convert_user_3()
@@ -650,4 +698,3 @@ def map_weather_to_step_count_daily_trend_data(file_path: str) -> None:
 # map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily")
 # map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily")
 # map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily")
-

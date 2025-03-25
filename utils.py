@@ -4,6 +4,10 @@ import ast
 import os
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import csv
+import json
+from collections import defaultdict
+import pytz
 
 
 def convert_user_1(raw_data):
@@ -222,7 +226,139 @@ def convert_user_3(raw_data_path: str = "raw_data_user3.csv"):
 
 
 def convert_user_4(raw_data):
-    return
+    # Input and output file paths
+    input_file = 'merged_health_fitness_data.csv'  # RAW DATA FILE
+
+    # FILES TO OUTPUT:
+    heart_rate_output_file = 'heart_rate_data.csv'
+    daily_steps_output_file = 'daily_steps_distance.csv'
+    step_count_data_file = 'step_count_data_user_4.csv'
+
+    # For FILE 1: Heart Rate Data
+    heart_rate_data = []
+
+    # For FILE 2: Daily Steps and Distance
+    daily_data = defaultdict(lambda: {'steps': 0, 'distance': 0})
+
+    # Read the input CSV file
+    with open(input_file, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        next(reader) 
+        
+        for row in reader:
+            if not row or len(row) < 6:
+                continue
+            
+            uid, sid, key, time, value, update_time = row
+            
+            try:
+                # Parse the JSON value
+                value_dict = json.loads(value)
+                
+                # Determine the correct timestamp field based on the key
+                if key in ['heart_rate', 'steps', 'calories', 'intensity', 'spo2']:
+                    timestamp = int(value_dict['time'])
+                elif key in ['valid_stand']:
+                    timestamp = int(value_dict['start_time'])  # Use start_time for valid_stand
+                elif key in ['vitality', 'resting_heart_rate']:
+                    timestamp = int(value_dict['date_time'])  # Use date_time for vitality/resting_heart_rate
+                else:
+                    continue  # Skip rows we don't need (e.g., valid_stand, vitality)
+
+                dt = datetime.fromtimestamp(timestamp)
+                
+                if key == 'heart_rate':
+                    # Process heart rate data
+                    bpm = value_dict['bpm']
+                    heart_rate_data.append({
+                        'date_time': dt.strftime('%Y-%m-%d %H:%M:%S'),
+                        'heart_rate': bpm
+                    })
+                
+                elif key == 'steps':
+                    # Process steps and distance data
+                    day = dt.strftime('%Y-%m-%d')
+                    daily_data[day]['steps'] += value_dict['steps']
+                    daily_data[day]['distance'] += value_dict['distance']
+                    
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                print(f"Error processing row: {row}. Error: {e}")
+                continue
+
+    # Write FILE 1: heart_rate_data.csv
+    with open(heart_rate_output_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['date_time', 'heart_rate'])
+        for entry in heart_rate_data:
+            writer.writerow([entry['date_time'], entry['heart_rate']])
+
+    # Write FILE 2: daily_steps_distance.csv
+    with open(daily_steps_output_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['day_time', 'daily_step_count', 'distance_covered'])
+        for day in sorted(daily_data.keys()):
+            writer.writerow([day, daily_data[day]['steps'], daily_data[day]['distance']])
+
+    print(f"Files generated successfully: {heart_rate_output_file}, {daily_steps_output_file}")
+
+    # FOR DAILY STEPS:
+    
+    # Read the input CSV
+    df = pd.read_csv(input_file)
+
+    # Filter rows where Key is "steps" since we need step_count and distance_covered
+    steps_df = df[df['Key'] == 'steps'].copy()
+
+    # Function to parse the JSON in the 'Value' column
+    def parse_value(json_str):
+        try:
+            data = json.loads(json_str)
+            return pd.Series({
+                'step_count': data.get('steps', float('nan')),
+                'distance_covered': data.get('distance', float('nan'))
+            })
+        except json.JSONDecodeError:
+            return pd.Series({
+                'step_count': float('nan'),
+                'distance_covered': float('nan')
+            })
+
+    # Function to convert epoch time to human-readable time with UTC+0100
+    def epoch_to_human_readable(epoch_time):
+        # Convert epoch to UTC datetime
+        utc_time = datetime.fromtimestamp(epoch_time, tz=pytz.UTC)
+        # Define UTC+0100 timezone
+        utc_plus_1 = pytz.timezone('Etc/GMT-1')  # GMT-1 is equivalent to UTC+0100
+        # Localize to UTC+0100
+        local_time = utc_time.astimezone(utc_plus_1)
+        # Format as string
+        return local_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Apply the parsing function to the 'Value' column
+    parsed_values = steps_df['Value'].apply(parse_value)
+    steps_df = pd.concat([steps_df, parsed_values], axis=1)
+
+    # Convert epoch time to human-readable time
+    steps_df['start_time_interval'] = steps_df['Time'].apply(epoch_to_human_readable)
+
+    # Create the output DataFrame with the required columns
+    output_df = pd.DataFrame({
+        'step_count': steps_df['step_count'],
+        'distance_covered': steps_df['distance_covered'],
+        'speed': float('nan'),  # Filled with NaN
+        'calories_burned': float('nan'),  # Filled with NaN as requested
+        'start_time_interval': steps_df['start_time_interval'],
+        'end_time_interval': float('nan'),  # Filled with NaN
+        'time_offset': 'UTC+0100',  # Time offset specified
+        'test_subject': 4  # Filled with 4
+    })
+
+    # Write the output to a new CSV file
+    output_df.to_csv(step_count_data_file, index=False)
+
+    print(f"Transformation complete. Output saved to {step_count_data_file}")
+
+
 
 
 def convert_user_5(raw_data: str) -> None:

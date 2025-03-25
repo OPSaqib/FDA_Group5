@@ -418,8 +418,42 @@ def convert_user_5(raw_data: str) -> None:
 
 def merge_users_data() -> None:
     heart_rate_data = [pd.read_csv(f"converted_data/heart_rate_data_user_{i}.csv") for i in range(1,6)]
-    step_count_daily_trend_data = [pd.read_csv(f"converted_data/step_count_daily_trend_data_user_{i}.csv") for i in range(1,6)]
+    step_count_daily_trend_data = [pd.read_csv(f"converted_data/step_count_daily_trend_user_{i}.csv") for i in range(1,6)]
     step_count_data = [pd.read_csv(f"converted_data/step_count_data_user_{i}.csv") for i in range(1,6)]
+
+
+    ## Apply some filters
+    # Check if column location exists
+    def add_location_to_df(df: pd.DataFrame) -> pd.DataFrame:
+        if "location" not in df.columns:
+            df["location"] = "Eindhoven"
+        elif ("location" in df.columns) and (df.loc[0, "location"] == "EHV"):
+            df["location"] = "Eindhoven"
+
+        return df
+    
+
+    # Check if column "Unnamed: 0" in columns
+    def remove_redundant_col(df: pd.DataFrame) -> pd.DataFrame:
+        if "Unnamed: 0" in df.columns:
+            df.drop(columns=['Unnamed: 0'], inplace=True)
+
+        return df
+    
+
+    # Check if column "time_offset" in coluumns for step_count_daily_trend.
+    def remove_time_offset_from_step_count_daily_trend(df: pd.DataFrame) -> pd.DataFrame:
+        if "time_offset" in df.columns:
+            df.drop(columns=["time_offset"], inplace=True)
+
+        return df
+
+
+    # Apply filters
+    heart_rate_data = [remove_redundant_col(add_location_to_df(df)) for df in heart_rate_data]
+    step_count_daily_trend_data = [remove_time_offset_from_step_count_daily_trend(remove_redundant_col(add_location_to_df(df))) for df in step_count_daily_trend_data]
+    step_count_data = [remove_redundant_col(add_location_to_df(df)) for df in step_count_data]
+    
 
     # Concatenate function
     concat_data = lambda x: pd.concat(x, axis=0, ignore_index=True)
@@ -428,14 +462,17 @@ def merge_users_data() -> None:
     step_count_daily_trend_concat_data = concat_data(step_count_daily_trend_data).sort_values(by=["test_subject", "day_time"])
     step_count_concat_data = concat_data(step_count_data).sort_values(by=["test_subject", "start_time_interval"])
 
+    if not os.path.exists("merged_data"):
+        os.makedirs("merged_data")
+
     heart_rate_concat_data.to_csv("merged_data/heart_rate_data_merged.csv")
-    step_count_daily_trend_concat_data.to_csv("merged_data/step_count_daily_trend_data_merged.csv")
+    step_count_daily_trend_concat_data.to_csv("merged_data/step_count_daily_trend_merged.csv")
     step_count_concat_data.to_csv("merged_data/step_count_data_merged.csv")
     
     return None
     
 
-def map_weather_to_health_data(file_path: str) -> None:
+def map_weather_to_health_data_hourly(file_path: str) -> None:
     # Load weather data
     weather_data = pd.concat([
         pd.read_csv("weather_data/Weather Data Hourly 2025-02-10 to 2025-02-28.csv"),
@@ -486,12 +523,22 @@ def map_weather_to_health_data(file_path: str) -> None:
         right_on=["name", "datetime"]
     )
 
-    merged_data.to_csv(f"merged_weather_health_data/{file_path.split("/")[1].replace(".csv", "")}_incl_weather.csv")
+    merged_data.to_csv(f"merged_weather_health_data/{file_path.split('/')[1].replace('.csv', '')}_incl_weather.csv")
 
     return None
 
 
+def map_wather_to_health_data_daily(file_path:str) -> None:
+
+
+
+
+    return None
+
+
+
+
 # merge_users_data()
-# map_weather_to_health_data("merged_data/heart_rate_data_merged.csv")
-# map_weather_to_health_data("merged_data/step_count_daily_trend_data_merged.csv")
-# map_weather_to_health_data("merged_data/step_count_data_merged.csv")
+map_weather_to_health_data_hourly("merged_data/heart_rate_data_merged.csv")
+# map_weather_to_health_data_hourly("merged_data/step_count_daily_trend_merged.csv")
+# map_weather_to_health_data_hourly("merged_data/step_count_data_merged.csv")

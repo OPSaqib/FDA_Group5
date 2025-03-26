@@ -463,7 +463,7 @@ def merge_users_data() -> None:
     return None
     
 
-def map_weather_to_heart_rate_data(file_path: str, method: str='daily') -> None:
+def map_weather_to_heart_rate_data(file_path: str, method: str='daily', average: bool=False) -> None:
     # Load weather data
     if method == 'daily':
         weather_data = pd.read_csv("weather_data/Weather Data Daily 2025-02-10 to 2025-03-30.csv", 
@@ -511,26 +511,42 @@ def map_weather_to_heart_rate_data(file_path: str, method: str='daily') -> None:
         location=('location', 'first')
     ).reset_index()
 
+    # Apply averaging to columns
+    if type(average) != bool:
+        raise ValueError("Unvalid parameter 'average'!")
+    elif average:
+        grouped_df2 = grouped_df.groupby([f'date_time_start_{method}', 'location']).agg({
+            'heart_rate_min': 'mean',
+            'heart_rate_max': 'mean',
+            'time_offset': 'first',
+            'test_subject': 'count'
+        }).rename(columns={'test_subject':'sample_size'}).reset_index()
+    else:
+        grouped_df2 = grouped_df.copy()
+
     # Add end_time_interval
     if method == 'daily':
-        grouped_df['date_time_end_daily'] = grouped_df['date_time_start_daily'].apply(lambda x: x + pd.Timedelta(days=1))
+        grouped_df2['date_time_end_daily'] = grouped_df2['date_time_start_daily'].apply(lambda x: x + pd.Timedelta(days=1))
     elif method == 'hourly':
-        grouped_df['date_time_end_hourly'] = grouped_df['date_time_start_hourly'].apply(lambda x: x + pd.Timedelta(hours=1))
+        grouped_df2['date_time_end_hourly'] = grouped_df2['date_time_start_hourly'].apply(lambda x: x + pd.Timedelta(hours=1))
     else:
         raise ValueError("Unknown method!")
         
     # Filter data to predefined time range
     start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
     end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
-    mask = (grouped_df[f"date_time_start_{method}"] >= start) & (grouped_df[f"date_time_start_{method}"] <= end)
-    filtered_health_data = grouped_df.loc[mask].copy()
+    mask = (grouped_df2[f"date_time_start_{method}"] >= start) & (grouped_df2[f"date_time_start_{method}"] <= end)
+    filtered_health_data = grouped_df2.loc[mask].copy()
 
     # Transform back to string
     filtered_health_data[f"date_time_start_{method}"] = filtered_health_data[f"date_time_start_{method}"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
     filtered_health_data[f"date_time_end_{method}"] = filtered_health_data[f"date_time_end_{method}"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 
     # Order columns
-    filtered_health_data = filtered_health_data[["heart_rate_min", "heart_rate_max", f"date_time_start_{method}", f"date_time_end_{method}", "time_offset", "test_subject", "location"]]
+    if average:
+        filtered_health_data = filtered_health_data[["heart_rate_min", "heart_rate_max", f"date_time_start_{method}", f"date_time_end_{method}", "time_offset", "sample_size", "location"]]
+    else:
+        filtered_health_data = filtered_health_data[["heart_rate_min", "heart_rate_max", f"date_time_start_{method}", f"date_time_end_{method}", "time_offset", "test_subject", "location"]]
 
     # Merge with weather data
     merged_data = pd.merge(
@@ -544,12 +560,16 @@ def map_weather_to_heart_rate_data(file_path: str, method: str='daily') -> None:
     if not os.path.exists("merged_weather_health_data"):
         os.makedirs("merged_weather_health_data")
 
-    merged_data.to_csv(f"merged_weather_health_data/heart_rate_data_merged_incl_weather_{method}.csv")
+
+    if average:
+        merged_data.to_csv(f"merged_weather_health_data/heart_rate_data_merged_incl_weather_{method}_users_averaged.csv")
+    else:
+        merged_data.to_csv(f"merged_weather_health_data/heart_rate_data_merged_incl_weather_{method}.csv")
 
     return None
 
 
-def map_weather_to_step_count_data(file_path: str, method: str='daily') -> None:
+def map_weather_to_step_count_data(file_path: str, method: str='daily', average: bool=False) -> None:
     # Load weather data
     
     if method == 'daily':
@@ -592,27 +612,45 @@ def map_weather_to_step_count_data(file_path: str, method: str='daily') -> None:
         'location':'first'
     }).reset_index()
 
+    # Apply averaging to columns  
+    if type(average) != bool:
+        raise ValueError("Unvalid parameter 'average'!")
+    elif average:
+        grouped_df2 = grouped_df.groupby([f'start_time_interval_{method}', 'location']).agg({
+            'step_count': 'mean',
+            'distance_covered': 'mean',
+            'speed': 'mean',
+            'calories_burned': 'mean',
+            'time_offset': 'first',
+            'test_subject': 'count'
+        }).rename(columns={'test_subject':'sample_size'}).reset_index()
+    else:
+        grouped_df2 = grouped_df.copy()
+
+
     # Add end_time_interval
     if method == 'daily':
-        grouped_df['end_time_interval_daily'] = grouped_df['start_time_interval_daily'].apply(lambda x: x + pd.Timedelta(days=1))
+        grouped_df2['end_time_interval_daily'] = grouped_df2['start_time_interval_daily'].apply(lambda x: x + pd.Timedelta(days=1))
     elif method == 'hourly':
-        grouped_df['end_time_interval_hourly'] = grouped_df['start_time_interval_hourly'].apply(lambda x: x + pd.Timedelta(hours=1))
+        grouped_df2['end_time_interval_hourly'] = grouped_df2['start_time_interval_hourly'].apply(lambda x: x + pd.Timedelta(hours=1))
     else:
         raise ValueError("Unknown method!")
 
     # Filter data to predefined time range
     start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
     end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
-    mask = (grouped_df[f"start_time_interval_{method}"] >= start) & (grouped_df[f"start_time_interval_{method}"] <= end)
-    filtered_health_data = grouped_df.loc[mask].copy()
+    mask = (grouped_df2[f"start_time_interval_{method}"] >= start) & (grouped_df2[f"start_time_interval_{method}"] <= end)
+    filtered_health_data = grouped_df2.loc[mask].copy()
 
     # Transform back to string
     filtered_health_data[f'start_time_interval_{method}'] = filtered_health_data[f'start_time_interval_{method}'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
     filtered_health_data[f'end_time_interval_{method}'] = filtered_health_data[f'end_time_interval_{method}'].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 
     # Order columns
-    filtered_health_data = filtered_health_data[["step_count", "distance_covered", "speed", "calories_burned", f"start_time_interval_{method}", f"end_time_interval_{method}", "time_offset", "test_subject", "location"]]
-
+    if average:
+        filtered_health_data = filtered_health_data[["step_count", "distance_covered", "speed", "calories_burned", f"start_time_interval_{method}", f"end_time_interval_{method}", "time_offset", "sample_size", "location"]]
+    else:
+        filtered_health_data = filtered_health_data[["step_count", "distance_covered", "speed", "calories_burned", f"start_time_interval_{method}", f"end_time_interval_{method}", "time_offset", "test_subject", "location"]]
     # Merge with weather data
     merged_data = pd.merge(
         filtered_health_data,
@@ -625,12 +663,15 @@ def map_weather_to_step_count_data(file_path: str, method: str='daily') -> None:
     if not os.path.exists("merged_weather_health_data"):
         os.makedirs("merged_weather_health_data")
 
-    merged_data.to_csv(f"merged_weather_health_data/step_count_data_merged_incl_weather_{method}.csv")
+    if average:
+        merged_data.to_csv(f"merged_weather_health_data/step_count_data_merged_incl_weather_{method}_users_averaged.csv")
+    else:
+        merged_data.to_csv(f"merged_weather_health_data/step_count_data_merged_incl_weather_{method}.csv")
 
     return None
 
 
-def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='daily') -> None:
+def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='daily', average: bool=False) -> None:
     
     if method == 'hourly':
         raise ValueError("Method 'hourly' is not possible for daily trend!")
@@ -647,23 +688,38 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
     if "Unnamed: 0" in health_data.columns:
         health_data = health_data.drop(columns=["Unnamed: 0"])
 
-    
-
     # Transform to datetime
     health_data["day_time"] = pd.to_datetime(pd.to_datetime(health_data["day_time"]).dt.strftime("%Y-%m-%d %H:%M:%S"))
+
+    # Apply averaging to columns
+    if type(average) != bool:
+        raise ValueError("Unvalid parameter 'average'!")
+    elif average:
+        grouped_df = health_data.groupby(["day_time", "location"]).agg({
+            "daily_step_count": "mean",
+            "distance_covered": "mean",
+            "speed": "mean",
+            "calories_burned": "mean",
+            "test_subject": "count"
+        }).rename(columns={"test_subject":"sample_size"}).reset_index()
+    else:
+        grouped_df = health_data.copy()
 
 
     # Filter data to predefined time range
     start = datetime.strptime("2025-02-10 00:00:00", "%Y-%m-%d %H:%M:%S")
     end = datetime.strptime("2025-03-30 23:59:00", "%Y-%m-%d %H:%M:%S")
-    mask = (health_data["day_time"] >= start) & (health_data["day_time"] <= end)
-    filtered_health_data = health_data.loc[mask].copy()
+    mask = (grouped_df["day_time"] >= start) & (grouped_df["day_time"] <= end)
+    filtered_health_data = grouped_df.loc[mask].copy()
 
     # Transform back to string
     filtered_health_data[f"day_time"] = filtered_health_data[f"day_time"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
 
     # Order columns
-    filtered_health_data = filtered_health_data[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject", "location"]]
+    if average:
+        filtered_health_data = filtered_health_data[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "sample_size", "location"]]
+    else:
+        filtered_health_data = filtered_health_data[["daily_step_count", "distance_covered", "speed", "calories_burned", "day_time", "test_subject", "location"]]
 
     # Merge with weather data
     merged_data = pd.merge(
@@ -677,7 +733,10 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
     if not os.path.exists("merged_weather_health_data"):
         os.makedirs("merged_weather_health_data")
 
-    merged_data.to_csv(f"merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_{method}.csv")
+    if average:
+        merged_data.to_csv(f"merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_{method}_users_averaged.csv")
+    else:
+        merged_data.to_csv(f"merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_{method}.csv")
 
     return None
 
@@ -690,11 +749,19 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
 # convert_user_4()
 # convert_user_5()
 
-# merge_users_data()
+merge_users_data()
 
-# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly")
-# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly")
+map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=True)
+map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=False)
 
-# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily")
-# map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily")
-# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily")
+map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=True)
+map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=False)
+
+map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=True)
+map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=False)
+
+map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=True)
+map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=False)
+
+map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=True)
+map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=False)

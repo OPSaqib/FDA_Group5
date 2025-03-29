@@ -8,7 +8,6 @@ import seaborn as sns
 
 # Main file for creating (basic) visualizations of our data
 
-# Cleaning function
 def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     '''
     Performs very basic cleaning on merged datasets
@@ -20,7 +19,6 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df = pd.concat([df, df_cond], axis=1)
     return df
 
-# Line plotting function
 def plot_basic_line(df: list[pd.DataFrame], x: list[str], y: list[str], titles: list[str]) -> None:
     '''
     Produces vertically stacked basic line plots using the given dataframes.
@@ -69,6 +67,7 @@ def plot_histograms(df: list[pd.DataFrame], value: list[str], titles: list[str],
 df_hr_vis = pd.read_csv('merged_weather_health_data/heart_rate_data_merged_incl_weather_hourly.csv')
 df_st_vis = pd.read_csv('merged_weather_health_data/step_count_data_merged_incl_weather_hourly.csv')
 df_dl_vis = pd.read_csv('merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_daily.csv')
+
 # Apply cleaning
 df_hr_vis, df_st_vis, df_dl_vis = clean_dataset(df_hr_vis), clean_dataset(df_st_vis), clean_dataset(df_dl_vis)
 
@@ -83,11 +82,13 @@ plot_basic_line([df_hr_vis, df_st_vis, df_dl_vis],
                 ['heart_rate_max','step_count','daily_step_count'],
                 ['Hourly maximum heartrate over time', 'Hourly step count over time', 'Daily step count over time'])
 
+# Histogram + KDE plot call
 plot_histograms([df_hr_vis, df_hr_vis, df_st_vis, df_dl_vis],
                 ['heart_rate_min', 'heart_rate_max', 'step_count', 'daily_step_count'],
                 ['Minimum heartrate distribution', 'Maximum heartrate distribution', 'Step count distribution', 'Daily step count distribution'],
                 [3, 3, 300, 500])
 
+# Show created plots
 plt.show() # Note that this can sometimes take a while to render out the plots - be patient!
 
 

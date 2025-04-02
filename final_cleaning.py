@@ -13,7 +13,7 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df_cond = df['conditions'].str.get_dummies(sep=', ')
     df = pd.concat([df, df_cond], axis=1)
     # Filter out irrelevant columns
-    df = df.drop(columns=['icon', 'stations', 'solarenergy', 'severerisk', 'conditions'])
+    df = df.drop(columns=['icon', 'stations', 'solarenergy', 'severerisk', 'conditions', 'Unnamed: 0'])
     return df
 
 for file in os.listdir('merged_weather_health_data'):

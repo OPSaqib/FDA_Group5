@@ -8,17 +8,6 @@ import seaborn as sns
 
 # Main file for creating (basic) visualizations of our data
 
-def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
-    '''
-    Performs very basic cleaning on merged datasets
-    '''
-    # Filter out irrelevant columns
-    df = df.drop(columns=['icon', 'stations', 'solarenergy', 'severerisk'])
-    # Split conditions into separate columns
-    df_cond = df['conditions'].str.get_dummies(sep=', ')
-    df = pd.concat([df, df_cond], axis=1)
-    return df
-
 def plot_basic_line(df: list[pd.DataFrame], x: list[str], y: list[str], titles: list[str]) -> None:
     '''
     Produces vertically stacked basic line plots using the given dataframes.
@@ -93,17 +82,10 @@ def plot_correlation(df: list[pd.DataFrame], x: list[str], y: list[str], titles:
     return None
 
 # Load datasets
-df_hr_vis = pd.read_csv('merged_weather_health_data/heart_rate_data_merged_incl_weather_hourly.csv')
-df_st_vis = pd.read_csv('merged_weather_health_data/step_count_data_merged_incl_weather_hourly.csv')
-df_dl_vis = pd.read_csv('merged_weather_health_data/step_count_daily_trend_data_merged_incl_weather_daily.csv')
+df_hr_vis = pd.read_csv('cleaned_final_data/heart_rate_data_merged_incl_weather_hourly.csv')
+df_st_vis = pd.read_csv('cleaned_final_data/step_count_data_merged_incl_weather_hourly.csv')
+df_dl_vis = pd.read_csv('cleaned_final_data/step_count_daily_trend_data_merged_incl_weather_daily.csv')
 
-# Apply cleaning
-df_hr_vis, df_st_vis, df_dl_vis = clean_dataset(df_hr_vis), clean_dataset(df_st_vis), clean_dataset(df_dl_vis)
-
-# Aggresive NaN removal - REMOVE THIS LINE ONCE WE HAVE A WAY OF DEALING WITH NAN VALUES!
-#df_hr_vis = df_hr_vis.dropna()
-#df_st_vis = df_st_vis.dropna()
-#df_dl_vis = df_dl_vis.dropna()
 
 # Basic line plot call - this one is laggy and not very useful, so it is commented out
 #plot_basic_line([df_hr_vis, df_st_vis, df_dl_vis], 

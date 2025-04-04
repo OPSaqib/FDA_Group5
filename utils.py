@@ -432,7 +432,7 @@ def merge_users_data() -> None:
         return df
     
 
-    # Check if column "time_offset" in coluumns for step_count_daily_trend.
+    # Check if column "time_offset" in columns for step_count_daily_trend.
     def remove_time_offset_from_step_count_daily_trend(df: pd.DataFrame) -> pd.DataFrame:
         if "time_offset" in df.columns:
             df.drop(columns=["time_offset"], inplace=True)

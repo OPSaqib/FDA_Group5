@@ -463,7 +463,24 @@ def merge_users_data() -> None:
     return None
     
 
-def map_weather_to_heart_rate_data(file_path: str, method: str='daily', average: bool=False) -> None:
+def final_cleaning_weather_data(df: pd.DataFrame, method: str) -> pd.DataFrame:
+    '''
+    Removes redundant weather columns from existing dataframe (df).
+    '''
+
+    if method == "daily":
+        cols_needed = ["datetime", "name", "tempmin", "tempmax", "temp", "uvindex", "solarradiation", "windspeed", "humidity", "conditions"]
+
+    elif method == "hourly":
+        cols_needed = ["datetime", "name", "temp", "uvindex", "solarradiation", "windspeed", "humidity", "conditions"]
+
+    else:
+        raise ValueError("Unknown method!")
+
+    return df[cols_needed].copy()
+
+
+def map_weather_to_heart_rate_data(file_path: str, method: str='daily', average: bool=False, remove_redundant_weather_cols: bool=True) -> None:
     # Load weather data
     if method == 'daily':
         weather_data = pd.read_csv("weather_data/Weather Data Daily 2025-02-10 to 2025-03-30.csv", 
@@ -479,6 +496,10 @@ def map_weather_to_heart_rate_data(file_path: str, method: str='daily', average:
 
     # Convert ISO format to datetime string
     weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Removes redundant columns
+    if remove_redundant_weather_cols:
+        weather_data = final_cleaning_weather_data(weather_data, method)
 
     # Load and parse health data
     health_data = pd.read_csv(file_path)
@@ -569,7 +590,7 @@ def map_weather_to_heart_rate_data(file_path: str, method: str='daily', average:
     return None
 
 
-def map_weather_to_step_count_data(file_path: str, method: str='daily', average: bool=False) -> None:
+def map_weather_to_step_count_data(file_path: str, method: str='daily', average: bool=False, remove_redundant_weather_cols: bool=True) -> None:
     # Load weather data
     
     if method == 'daily':
@@ -586,6 +607,10 @@ def map_weather_to_step_count_data(file_path: str, method: str='daily', average:
     
     # Convert ISO format to datetime string
     weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Removes redundant columns
+    if remove_redundant_weather_cols:
+        weather_data = final_cleaning_weather_data(weather_data, method)
 
     health_data = pd.read_csv(file_path)
     if "Unnamed: 0" in health_data.columns:
@@ -671,7 +696,7 @@ def map_weather_to_step_count_data(file_path: str, method: str='daily', average:
     return None
 
 
-def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='daily', average: bool=False) -> None:
+def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='daily', average: bool=False, remove_redundant_weather_cols: bool=True) -> None:
     
     if method == 'hourly':
         raise ValueError("Method 'hourly' is not possible for daily trend!")
@@ -683,6 +708,10 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
     
     # Convert ISO format to datetime string
     weather_data["datetime"] = pd.to_datetime(weather_data["datetime"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Removes redundant columns
+    if remove_redundant_weather_cols:
+        weather_data = final_cleaning_weather_data(weather_data, method)
 
     health_data = pd.read_csv(file_path)
     if "Unnamed: 0" in health_data.columns:
@@ -741,7 +770,7 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
     return None
 
 
-### Execute functions --> move to main.py ###
+### Execute functions ###
 
 # convert_user_1()
 # convert_user_2()
@@ -749,19 +778,19 @@ def map_weather_to_step_count_daily_trend_data(file_path: str, method: str='dail
 # convert_user_4()
 # convert_user_5()
 
-merge_users_data()
+# merge_users_data()
 
-map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=True)
-map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=False)
+# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=True, remove_redundant_weather_cols=True)
+# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="hourly", average=False, remove_redundant_weather_cols=True)
 
-map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=True)
-map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=False)
+# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=True, remove_redundant_weather_cols=True)
+# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="hourly", average=False, remove_redundant_weather_cols=True)
 
-map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=True)
-map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=False)
+# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=True, remove_redundant_weather_cols=True)
+# map_weather_to_heart_rate_data("merged_data/heart_rate_data_merged.csv", method="daily", average=False, remove_redundant_weather_cols=True)
 
-map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=True)
-map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=False)
+# map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=True, remove_redundant_weather_cols=True)
+# map_weather_to_step_count_daily_trend_data("merged_data/step_count_daily_trend_merged.csv", method="daily", average=False, remove_redundant_weather_cols=True)
 
-map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=True)
-map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=False)
+# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=True, remove_redundant_weather_cols=True)
+# map_weather_to_step_count_data("merged_data/step_count_data_merged.csv", method="daily", average=False, remove_redundant_weather_cols=True)

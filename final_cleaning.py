@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 # Final cleaning steps for the datasets
-# Should be run as the last step before visualizations
+# Should be run as the last step
 
 def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     '''
@@ -12,8 +12,6 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     # Split conditions into separate columns
     df_cond = df['conditions'].str.get_dummies(sep=', ')
     df = pd.concat([df, df_cond], axis=1)
-    # Filter out irrelevant columns
-    df = df.drop(columns=['icon', 'stations', 'solarenergy', 'severerisk', 'conditions', 'Unnamed: 0'])
     return df
 
 for file in os.listdir('merged_weather_health_data'):

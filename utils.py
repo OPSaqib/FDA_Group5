@@ -36,9 +36,107 @@ def convert_user_1(raw_data: str = "raw_data_heartrate_upload.csv") -> None:
     df_hr['end_time'] = pd.to_datetime(df_hr['end_time'])
 
     df_hr.head(30)
+    # Rename the columns
+    df_hr = df_hr.rename(columns={
+        'avg_heart_rate': 'heart_rate',
+        'min_heart_rate': 'heart_rate_min',
+        'max_heart_rate': 'heart_rate_max',
+        'start_time': 'date_time'
+    })
+
+
+    # Reorder the columns to match the desired structure
+    df_hr = df_hr[['heart_rate', 'heart_rate_min', 'heart_rate_max', 'date_time']]
+
+    # Add the new columns 'time_offset' and 'test_subject'
+    df_hr['time_offset'] = 'UTC+0100'  # Set all values to 'UTC+0100'
+    df_hr['test_subject'] = 1  # Set all values to 1
+
+    # Convert 'date_time' to datetime format
+    df_hr['date_time'] = pd.to_datetime(df_hr['date_time'])
+
+    # Format 'date_time' to the desired string format: YYYY-MM-DD HHMM:SS
+    df_hr['date_time'] = df_hr['date_time'].dt.strftime('%Y-%m-%d %H%M:%S')
 
     df_hr.to_csv('Processed_heart_rate_data1.csv', index=False)
-    
+
+    #Step count data
+    df_steps = pd.read_csv(
+        "raw_data_stepcount_user_1.csv",
+        skiprows=1,        # Skip that very first line
+        usecols=range(18)  # Only read columns 0..17
+    )
+    df_steps_processed = df_steps.copy()
+    df_steps_processed.head()
+
+    df_steps_processed = df_steps_processed.rename(columns={
+        'com.samsung.health.step_count.count': 'step_count',
+        'com.samsung.health.step_count.distance': 'distance_covered',
+        'com.samsung.health.step_count.calorie': 'calories_burned',
+        'com.samsung.health.step_count.start_time': 'start_time_interval',
+        'com.samsung.health.step_count.end_time': 'end_time_interval',
+        'com.samsung.health.step_count.time_offset': 'time_offset'
+    })
+
+    df_steps_processed['speed'] = pd.NA
+
+    df_steps_processed['test_subject'] = 1
+
+    df_steps_processed = df_steps_processed[[
+        'step_count',
+        'distance_covered',
+        'speed',
+        'calories_burned',
+        'start_time_interval',
+        'end_time_interval',
+        'time_offset',
+        'test_subject'
+    ]]
+
+    df_steps_processed['start_time_interval'] = pd.to_datetime(df_steps_processed['start_time_interval'])
+    df_steps_processed['end_time_interval'] = pd.to_datetime(df_steps_processed['end_time_interval'])
+
+    # Format to 'YYYY-MM-DD HH:MM:SS'
+    df_steps_processed['start_time_interval'] = df_steps_processed['start_time_interval'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df_steps_processed['end_time_interval'] = df_steps_processed['end_time_interval'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df_steps_processed.to_csv('step_count_data_user_1.csv', index=False)
+
+    #daily step trend
+
+    df_daily_trend = pd.read_csv(
+        "raw_daily_trend_stepcount_data.csv",
+        skiprows=1,        # Skip that very first line
+        usecols=range(13)  # Only read columns 0..12 #ie there are 13 columns
+    )
+    df_daily_trend_processed = df_daily_trend.copy()
+
+    df_daily_trend_processed = df_daily_trend_processed.rename(columns={'day_time': 'original_day_time'})
+    df_daily_trend_processed = df_daily_trend_processed.rename(columns={'update_time': 'day_time'})
+    df_daily_trend_processed = df_daily_trend_processed.rename(columns={
+        'count': 'daily_step_count',
+        'distance': 'distance_covered',
+        'calorie': 'calories_burned',
+    })
+
+    # Step 2: Add the 'test_subject' column and set all values to 1
+    df_daily_trend_processed['test_subject'] = 1
+
+    # Step 3: Reorder the columns to match the template
+    df_daily_trend_processed = df_daily_trend_processed[[
+        'daily_step_count',
+        'distance_covered',
+        'speed',
+        'calories_burned',
+        'day_time',
+        'test_subject'
+    ]]
+
+    df_daily_trend_processed['day_time'] = df_daily_trend_processed['day_time'].apply(lambda x: x + '000' if len(x.split('.')[1]) == 3 else x)
+    df_daily_trend_processed['day_time'] = pd.to_datetime(df_daily_trend_processed['day_time'], format='%Y-%m-%d %H:%M:%S.%f', errors='coerce')
+
+    df_daily_trend_processed['day_time'] = df_daily_trend_processed['day_time'].dt.strftime('%Y-%m-%d')
+
+    df_daily_trend_processed.to_csv('step_count_daily_trend_user_1.csv', index=False)
     return None
 
 
